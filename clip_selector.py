@@ -2,45 +2,47 @@
 import json
 from openai import OpenAI
 
-def select_best_clips(transcript, quantity=5, duration=45):
-
-    client = OpenAI()
+def select_best_clips(
+    transcript,
+    api_key,
+    quantity=5,
+    duration=45
+):
+    client = OpenAI(api_key=api_key)
 
     prompt = f"""
-    Eres un experto editor de videos cortos para TikTok,
-    Instagram Reels y YouTube Shorts.
+    Eres un editor profesional de TikTok,
+    Reels y YouTube Shorts.
 
-    Analiza esta transcripción y selecciona los
-    {quantity} mejores momentos.
+    Analiza esta transcripción y selecciona
+    exactamente {quantity} momentos.
 
-    Cada clip debe durar aproximadamente {duration} segundos.
+    Duración objetivo: {duration} segundos.
 
     Prioriza:
-    - Frases que atrapen desde el principio.
-    - Historias interesantes.
-    - Revelaciones y sorpresas.
-    - Consejos útiles.
-    - Momentos emocionales.
-    - Fragmentos que tengan sentido por sí solos.
+    - Ganchos impactantes.
+    - Historias completas.
+    - Revelaciones.
+    - Consejos interesantes.
+    - Emociones y sorpresas.
 
-    Evita:
-    - Repeticiones.
-    - Silencios.
-    - Fragmentos sin contexto.
-    - Momentos aburridos.
+    Evita repeticiones y fragmentos sin contexto.
 
-    Devuelve exclusivamente JSON con esta estructura:
+    Devuelve JSON con esta estructura:
 
     {{
       "clips": [
         {{
           "start": 0,
           "end": 45,
-          "hook": "Gancho del video",
-          "reason": "Por qué seleccionaste este momento"
+          "hook": "Gancho",
+          "reason": "Motivo de selección"
         }}
       ]
     }}
+
+    Los tiempos deben corresponder a la transcripción.
+    No inventes marcas de tiempo.
 
     TRANSCRIPCIÓN:
     {transcript}
@@ -51,7 +53,7 @@ def select_best_clips(transcript, quantity=5, duration=45):
         messages=[
             {
                 "role": "system",
-                "content": "Eres un editor profesional de videos virales."
+                "content": "Eres un editor experto en videos cortos."
             },
             {
                 "role": "user",
