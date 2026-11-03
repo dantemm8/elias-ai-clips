@@ -1,3 +1,4 @@
+
 import streamlit as st
 import os
 import tempfile
@@ -39,6 +40,7 @@ st.write("📱 Formato: Vertical 9:16")
 st.write("🎞️ Resolución: 1080 × 1920")
 st.write("🧠 Selección: Inteligencia artificial")
 st.write("💬 Subtítulos: Palabra por palabra")
+st.write("⚡ Motor de IA: Groq")
 
 if st.button(
     "🚀 GENERAR MIS CLIPS",
@@ -49,8 +51,10 @@ if st.button(
         st.error("Primero debes subir un video.")
 
     else:
+        video_path = None
+
         try:
-            api_key = st.secrets["OPENAI_API_KEY"]
+            api_key = st.secrets["GROQ_API_KEY"]
 
             extension = os.path.splitext(video.name)[1]
 
@@ -72,8 +76,6 @@ if st.button(
                     cantidad,
                     duracion
                 )
-
-            os.remove(video_path)
 
             if clips:
                 st.success(
@@ -97,6 +99,10 @@ if st.button(
         except Exception as error:
             st.error("Ocurrió un error durante la generación.")
             st.code(str(error))
+
+        finally:
+            if video_path and os.path.exists(video_path):
+                os.remove(video_path)
 
 st.divider()
 st.caption("ELIAS AI CLIPS © 2026")
