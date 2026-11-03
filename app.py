@@ -1,7 +1,8 @@
-
 import streamlit as st
-import re
-from openai import OpenAI
+import os
+import tempfile
+
+from clip_pipeline import generate_clips
 
 st.set_page_config(
     page_title="Elias AI Clips",
@@ -16,15 +17,14 @@ st.divider()
 
 st.subheader("🎥 Generador inteligente")
 
-url = st.text_input(
-    "Enlace de YouTube",
-    placeholder="Pega aquí el enlace del video"
+video = st.file_uploader(
+    "Sube tu video",
+    type=["mp4", "mov", "mkv", "webm"]
 )
 
 cantidad = st.selectbox(
     "Cantidad de clips",
-    [5, 10, 15],
-    index=0
+    [5, 10, 15]
 )
 
 duracion = st.selectbox(
@@ -33,67 +33,70 @@ duracion = st.selectbox(
     index=1
 )
 
-subtitulos = st.selectbox(
-    "Estilo de subtítulos",
-    ["Dinámicos", "Normales"]
-)
-
 st.divider()
-
-st.subheader("⚙️ Configuración")
 
 st.write("📱 Formato: Vertical 9:16")
-st.write("🎞️ Resolución: 1080p")
+st.write("🎞️ Resolución: 1080 × 1920")
 st.write("🧠 Selección: Inteligencia artificial")
-
-st.divider()
-
-st.subheader("🔌 Conexión de inteligencia artificial")
-
-if st.button("Probar conexión con OpenAI", use_container_width=True):
-
-    try:
-        api_key = st.secrets["OPENAI_API_KEY"]
-
-        client = OpenAI(api_key=api_key)
-
-        client.models.list()
-
-        st.success("¡Conexión con OpenAI establecida!")
-
-    except KeyError:
-        st.error("No encontramos OPENAI_API_KEY en Secrets.")
-
-    except Exception as e:
-        st.error("No se pudo conectar con OpenAI.")
-        st.code(str(e))
-
-st.divider()
+st.write("💬 Subtítulos: Palabra por palabra")
 
 if st.button(
-    "🚀 PREPARAR GENERACIÓN",
+    "🚀 GENERAR MIS CLIPS",
     use_container_width=True
 ):
 
-    if not re.match(
-        r"^https?://(www\.)?(youtube\.com|youtu\.be)/",
-        url.strip()
-    ):
-        st.error("Introduce un enlace válido de YouTube.")
+    if video is None:
+        st.error("Primero debes subir un video.")
 
     else:
-        st.success("Enlace recibido correctamente.")
+        try:
+            api_key = st.secrets["OPENAI_API_KEY"]
 
-        st.write("Cantidad de clips:", cantidad)
-        st.write("Duración:", duracion, "segundos")
-        st.write("Subtítulos:", subtitulos)
+            extension = os.path.splitext(video.name)[1]
 
-        st.info(
-            "El motor de análisis y edición todavía "
-            "está en construcción. Esta versión "
-            "comprueba el enlace y configura el trabajo."
-        )
+            with tempfile.NamedTemporaryFile(
+                delete=False,
+                suffix=extension
+            ) as temp_video:
+
+                temp_video.write(video.getbuffer())
+                video_path = temp_video.name
+
+            with st.spinner(
+                "La inteligencia artificial está trabajando..."
+            ):
+
+                clips = generate_clips(
+                    video_path,
+                    api_key,
+                    cantidad,
+                    duracion
+                )
+
+            os.remove(video_path)
+
+            if clips:
+                st.success(
+                    f"¡Se generaron {len(clips)} clips!"
+                )
+
+                for index, path in enumerate(clips, start=1):
+                    with open(path, "rb") as file:
+                        st.download_button(
+                            f"⬇️ Descargar clip {index}",
+                            data=file.read(),
+                            file_name=os.path.basename(path),
+                            mime="video/mp4",
+                            key=f"download_{index}"
+                        )
+            else:
+                st.warning(
+                    "No se pudieron generar clips válidos."
+                )
+
+        except Exception as error:
+            st.error("Ocurrió un error durante la generación.")
+            st.code(str(error))
 
 st.divider()
-
 st.caption("ELIAS AI CLIPS © 2026")
