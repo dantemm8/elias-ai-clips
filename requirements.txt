@@ -1,6 +1,5 @@
 
 streamlit
 openai
-faster-whisper
 yt-dlp
 
