@@ -1,51 +1,63 @@
-
 import json
 from openai import OpenAI
 
+
 def select_best_clips(
-    transcript,
+    transcription,
     api_key,
     quantity=5,
     duration=45
 ):
     client = OpenAI(api_key=api_key)
 
+    segments = transcription.get("segments", [])
+
+    if not segments:
+        raise ValueError("La transcripción no contiene tiempos.")
+
+    timestamped_text = "\n".join(
+        f"[{item['start']:.2f} - {item['end']:.2f}] "
+        f"{item['text']}"
+        for item in segments
+    )
+
     prompt = f"""
-    Eres un editor profesional de TikTok,
-    Reels y YouTube Shorts.
+    Actúa como editor profesional de TikTok,
+    Instagram Reels y YouTube Shorts.
 
-    Analiza esta transcripción y selecciona
-    exactamente {quantity} momentos.
+    Selecciona exactamente {quantity} momentos
+    interesantes de esta transcripción.
 
-    Duración objetivo: {duration} segundos.
+    Duración objetivo de cada clip: {duration} segundos.
 
     Prioriza:
-    - Ganchos impactantes.
+    - Ganchos que atrapen desde el inicio.
     - Historias completas.
-    - Revelaciones.
-    - Consejos interesantes.
-    - Emociones y sorpresas.
+    - Revelaciones y sorpresas.
+    - Consejos útiles.
+    - Emociones y momentos impactantes.
 
     Evita repeticiones y fragmentos sin contexto.
 
-    Devuelve JSON con esta estructura:
+    Devuelve exclusivamente un JSON con esta estructura:
 
     {{
       "clips": [
         {{
-          "start": 0,
-          "end": 45,
-          "hook": "Gancho",
+          "start": 10.5,
+          "end": 55.5,
+          "hook": "Gancho del clip",
           "reason": "Motivo de selección"
         }}
       ]
     }}
 
-    Los tiempos deben corresponder a la transcripción.
+    Los tiempos deben estar en segundos y dentro
+    de los límites de la transcripción.
     No inventes marcas de tiempo.
 
-    TRANSCRIPCIÓN:
-    {transcript}
+    TRANSCRIPCIÓN CON TIEMPOS:
+    {timestamped_text}
     """
 
     response = client.chat.completions.create(
@@ -63,6 +75,8 @@ def select_best_clips(
         response_format={"type": "json_object"}
     )
 
-    return json.loads(
+    result = json.loads(
         response.choices[0].message.content
     )
+
+    return result
