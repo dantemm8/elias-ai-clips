@@ -1,0 +1,54 @@
+def format_ass_time(seconds):
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = seconds % 60
+
+    centiseconds = int((secs - int(secs)) * 100)
+
+    return (
+        f"{hours}:{minutes:02d}:"
+        f"{int(secs):02d}.{centiseconds:02d}"
+    )
+
+
+def create_subtitles(words, output_path="subtitles.ass"):
+    header = """[Script Info]
+Title: Elias AI Clips
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,78,&H00FFFFFF,&H0000FFFF,&H00000000,&H80000000,-1,0,1,4,2,2,60,60,300,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+"""
+
+    events = []
+
+    for word in words:
+        start = max(0, float(word["start"]))
+        end = max(start + 0.05, float(word["end"]))
+        text = str(word["text"]).strip()
+
+        if not text:
+            continue
+
+        text = text.replace("{", "").replace("}", "")
+        text = text.replace("\\", "")
+
+        events.append(
+            "Dialogue: 0,"
+            + format_ass_time(start)
+            + ","
+            + format_ass_time(end)
+            + ",Default,,0,0,0,,"
+            + text
+        )
+
+    with open(output_path, "w", encoding="utf-8") as file:
+        file.write(header + "\n".join(events))
+
+    return output_path
