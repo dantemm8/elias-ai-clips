@@ -1,12 +1,13 @@
-from openai import OpenAI
+
+from groq import Groq
 
 
 def transcribe_audio(audio_path, api_key):
-    client = OpenAI(api_key=api_key)
+    client = Groq(api_key=api_key)
 
     with open(audio_path, "rb") as audio_file:
         transcription = client.audio.transcriptions.create(
-            model="whisper-1",
+            model="whisper-large-v3",
             file=audio_file,
             response_format="verbose_json",
             timestamp_granularities=["segment", "word"]
