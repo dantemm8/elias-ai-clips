@@ -11,7 +11,11 @@ def format_ass_time(seconds):
     )
 
 
-def create_subtitles(words, output_path="subtitles.ass"):
+def create_subtitles(
+    words,
+    output_path="subtitles.ass",
+    clip_start=0
+):
     header = """[Script Info]
 Title: Elias AI Clips
 ScriptType: v4.00+
@@ -29,15 +33,15 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     events = []
 
     for word in words:
-        start = max(0, float(word["start"]))
-        end = max(start + 0.05, float(word["end"]))
+        start = max(0, float(word["start"]) - clip_start)
+        end = max(start + 0.05, float(word["end"]) - clip_start)
+
         text = str(word["text"]).strip()
+        text = text.replace("{", "").replace("}", "")
+        text = text.replace("\\", "")
 
         if not text:
             continue
-
-        text = text.replace("{", "").replace("}", "")
-        text = text.replace("\\", "")
 
         events.append(
             "Dialogue: 0,"
